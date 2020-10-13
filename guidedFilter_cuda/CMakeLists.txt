@@ -3,7 +3,7 @@ project(GuidedFilter)
 
 set(CMAKE_CXX_STANDARD 11)
 
-include(/usr/share/cmake-3.2/Modules/FindCUDA.cmake)
+include(/usr/share/cmake-3.10/Modules/FindCUDA.cmake)
 include_directories(./)
 
 set(SOURCE_FILES main.cpp BFilter.cu GFilter.cu guidedfilter.cpp)

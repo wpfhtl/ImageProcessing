@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(CUDA_NVCC_FLAGS -ptx)
 
-include(/usr/share/cmake-3.2/Modules/FindCUDA.cmake)
+include(/usr/share/cmake-3.10/Modules/FindCUDA.cmake)
 include_directories(./)
 
 set(SOURCE_FILES main.cpp)
@@ -23,4 +23,4 @@ set(CUDA_LIBS /usr/local/cuda/lib64)
 target_link_libraries(boxFilterNPP ${OpenCV_LIBS})
 target_link_libraries(boxFilterNPP /usr/lib/libfreeimage.so)
 target_link_libraries(boxFilterNPP ${CUDA_LIBRARIES})
-target_link_libraries(boxFilterNPP ${CUDA_LIBS}/libnppi.so)
+target_link_libraries(boxFilterNPP ${CUDA_LIBS}/libnppial.so ${CUDA_LIBS}/libnppicc.so ${CUDA_LIBS}/libnppicom.so ${CUDA_LIBS}/libnppidei.so ${CUDA_LIBS}/libnppif.so ${CUDA_LIBS}/libnppig.so ${CUDA_LIBS}/libnppim.so ${CUDA_LIBS}/libnppist.so ${CUDA_LIBS}/libnppisu.so ${CUDA_LIBS}/libnppitc.so ${CUDA_LIBS}/libnpps.so)

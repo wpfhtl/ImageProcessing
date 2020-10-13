@@ -7,7 +7,7 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-include(/usr/share/cmake-3.2/Modules/FindCUDA.cmake)
+# include(/usr/share/cmake-3.10/Modules/FindCUDA.cmake)
 
 find_package(CUDA REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -23,4 +23,4 @@ set(CUDA_DIR /usr/local/cuda/lib64)
 
 target_link_libraries(GuidedFilterOptimize ${OpenCV_LIBS})
 target_link_libraries(GuidedFilterOptimize ${CUDA_LIBRARIES})
-target_link_libraries(GuidedFilterOptimize libnppc.so libnppi.so libcublas.so libcusolver.so)
+target_link_libraries(GuidedFilterOptimize libnppc.so libnppial.so libnppicc.so libnppicom.so libnppidei.so libnppif.so libnppig.so libnppim.so libnppist.so libnppisu.so libnppitc.so libnpps.so libcublas.so libcusolver.so)

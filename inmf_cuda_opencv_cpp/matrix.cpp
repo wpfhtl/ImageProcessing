@@ -10,17 +10,17 @@ __global__ void vecMult(float* a,float* b,float* c,const int N);
 __global__ void colDiv(float* a, float* b, float* c, int M, int N);
 __global__ void colMul(float* a, float* b, float* c, int M, int N);
 __global__ void rowDiv(float* a, float* b, float* c, int M, int N);
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce2D(float *g_idata, float *g_odata, int N);
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce2DStrided(float *g_idata, float *g_odata, int N, int stride);
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce1DDiff(float *g_idata1, float *g_idata2, float *g_odata, int N);
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce1DDiv(float *g_idata1, float *g_idata2, float *g_odata, int N);
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce1DNan(float *g_idata1, float *g_odata, int N);
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce1DEql(float *g_idata1, float *g_odata, int N);
 void grid2D(dim3* dimGrid);
 
@@ -1333,13 +1333,13 @@ float zero_check_d(action_t action, matrix a, int* params)
 
 }
 
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce1DNan(float *g_idata1, float *g_odata, int N){
     extern __shared__ float sdata[];
     // each thread loads one element from global to shared mem
     unsigned int tid = threadIdx.x;
-    int i = blockIdx.x*blockSize + threadIdx.x;
-    const int gridSize = blockSize*gridDim.x;
+    int i = blockIdx.x*BLK_SZ + threadIdx.x;
+    const int gridSize = BLK_SZ*gridDim.x;
     float x;
     sdata[tid] = 0;
     while (i < N) {
@@ -1350,19 +1350,19 @@ __global__ void reduce1DNan(float *g_idata1, float *g_odata, int N){
     }
     __syncthreads();
     // do reduction in shared mem
-    if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; }
+    if (BLK_SZ >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; }
        	__syncthreads(); }
-    if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; }
+    if (BLK_SZ >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; }
 	__syncthreads(); }
-    if (blockSize >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; }
+    if (BLK_SZ >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; }
 	__syncthreads(); }
     if (tid < 32) {
-	if (blockSize >= 64){ sdata[tid] += sdata[tid + 32]; }
-	if (blockSize >= 32){ sdata[tid] += sdata[tid + 16]; }
-	if (blockSize >= 16){ sdata[tid] += sdata[tid + 8]; }
-	if (blockSize >= 8){ sdata[tid] += sdata[tid + 4]; }
-	if (blockSize >= 4){ sdata[tid] += sdata[tid + 2]; }
-	if (blockSize >= 2){ sdata[tid] += sdata[tid + 1]; }
+	if (BLK_SZ >= 64){ sdata[tid] += sdata[tid + 32]; }
+	if (BLK_SZ >= 32){ sdata[tid] += sdata[tid + 16]; }
+	if (BLK_SZ >= 16){ sdata[tid] += sdata[tid + 8]; }
+	if (BLK_SZ >= 8){ sdata[tid] += sdata[tid + 4]; }
+	if (BLK_SZ >= 4){ sdata[tid] += sdata[tid + 2]; }
+	if (BLK_SZ >= 2){ sdata[tid] += sdata[tid + 1]; }
     }
 
     // write result for this block to global mem
@@ -1371,13 +1371,13 @@ __global__ void reduce1DNan(float *g_idata1, float *g_odata, int N){
     }
 }
 
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce1DEql(float *g_idata1, float *g_odata, int N){
     extern __shared__ float sdata[];
     // each thread loads one element from global to shared mem
     unsigned int tid = threadIdx.x;
-    int i = blockIdx.x*blockSize + threadIdx.x;
-    const int gridSize = blockSize*gridDim.x;
+    int i = blockIdx.x*BLK_SZ + threadIdx.x;
+    const int gridSize = BLK_SZ*gridDim.x;
     float x;
     sdata[tid] = 0;
     while (i < N) {
@@ -1388,19 +1388,19 @@ __global__ void reduce1DEql(float *g_idata1, float *g_odata, int N){
     }
     __syncthreads();
     // do reduction in shared mem
-    if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; }
+    if (BLK_SZ >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; }
        	__syncthreads(); }
-    if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; }
+    if (BLK_SZ >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; }
 	__syncthreads(); }
-    if (blockSize >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; }
+    if (BLK_SZ >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; }
 	__syncthreads(); }
     if (tid < 32) {
-	if (blockSize >= 64){ sdata[tid] += sdata[tid + 32]; }
-	if (blockSize >= 32){ sdata[tid] += sdata[tid + 16]; }
-	if (blockSize >= 16){ sdata[tid] += sdata[tid + 8]; }
-	if (blockSize >= 8){ sdata[tid] += sdata[tid + 4]; }
-	if (blockSize >= 4){ sdata[tid] += sdata[tid + 2]; }
-	if (blockSize >= 2){ sdata[tid] += sdata[tid + 1]; }
+	if (BLK_SZ >= 64){ sdata[tid] += sdata[tid + 32]; }
+	if (BLK_SZ >= 32){ sdata[tid] += sdata[tid + 16]; }
+	if (BLK_SZ >= 16){ sdata[tid] += sdata[tid + 8]; }
+	if (BLK_SZ >= 8){ sdata[tid] += sdata[tid + 4]; }
+	if (BLK_SZ >= 4){ sdata[tid] += sdata[tid + 2]; }
+	if (BLK_SZ >= 2){ sdata[tid] += sdata[tid + 1]; }
     }
 
     // write result for this block to global mem
@@ -1409,15 +1409,15 @@ __global__ void reduce1DEql(float *g_idata1, float *g_odata, int N){
     }
 }
 
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce1DDiff(float *g_idata1, float *g_idata2, float *g_odata, int N){
     extern __shared__ float sdata[];
     float* diff = (float*)sdata;
-    float* sum = (float*)&sdata[blockSize];
+    float* sum = (float*)&sdata[BLK_SZ];
     // each thread loads one element from global to shared mem
     unsigned int tid = threadIdx.x;
-    int i = blockIdx.x*blockSize + threadIdx.x;
-    const int gridSize = blockSize*gridDim.x;
+    int i = blockIdx.x*BLK_SZ + threadIdx.x;
+    const int gridSize = BLK_SZ*gridDim.x;
     sum[tid] = 0;
     diff[tid] = 0;
     while (i < N) {
@@ -1427,19 +1427,19 @@ __global__ void reduce1DDiff(float *g_idata1, float *g_idata2, float *g_odata, i
     }
     __syncthreads();
     // do reduction in shared mem
-    if (blockSize >= 512) { if (tid < 256) { diff[tid] += diff[tid + 256]; sum[tid] += sum[tid + 256]; }
+    if (BLK_SZ >= 512) { if (tid < 256) { diff[tid] += diff[tid + 256]; sum[tid] += sum[tid + 256]; }
        	__syncthreads(); }
-    if (blockSize >= 256) { if (tid < 128) { diff[tid] += diff[tid + 128]; sum[tid] += sum[tid + 128]; }
+    if (BLK_SZ >= 256) { if (tid < 128) { diff[tid] += diff[tid + 128]; sum[tid] += sum[tid + 128]; }
 	__syncthreads(); }
-    if (blockSize >= 128) { if (tid < 64) { diff[tid] += diff[tid + 64]; sum[tid] += sum[tid + 64]; }
+    if (BLK_SZ >= 128) { if (tid < 64) { diff[tid] += diff[tid + 64]; sum[tid] += sum[tid + 64]; }
 	__syncthreads(); }
     if (tid < 32) {
-	if (blockSize >= 64){ diff[tid] += diff[tid + 32]; sum[tid] += sum[tid + 32]; }
-	if (blockSize >= 32){ diff[tid] += diff[tid + 16]; sum[tid] += sum[tid + 16]; }
-	if (blockSize >= 16){ diff[tid] += diff[tid + 8]; sum[tid] += sum[tid + 8]; }
-	if (blockSize >= 8){ diff[tid] += diff[tid + 4]; sum[tid] += sum[tid + 4]; }
-	if (blockSize >= 4){ diff[tid] += diff[tid + 2]; sum[tid] += sum[tid + 2]; }
-	if (blockSize >= 2){ diff[tid] += diff[tid + 1]; sum[tid] += sum[tid + 1]; }
+	if (BLK_SZ >= 64){ diff[tid] += diff[tid + 32]; sum[tid] += sum[tid + 32]; }
+	if (BLK_SZ >= 32){ diff[tid] += diff[tid + 16]; sum[tid] += sum[tid + 16]; }
+	if (BLK_SZ >= 16){ diff[tid] += diff[tid + 8]; sum[tid] += sum[tid + 8]; }
+	if (BLK_SZ >= 8){ diff[tid] += diff[tid + 4]; sum[tid] += sum[tid + 4]; }
+	if (BLK_SZ >= 4){ diff[tid] += diff[tid + 2]; sum[tid] += sum[tid + 2]; }
+	if (BLK_SZ >= 2){ diff[tid] += diff[tid + 1]; sum[tid] += sum[tid + 1]; }
     }
 
     // write result for this block to global mem
@@ -1449,13 +1449,13 @@ __global__ void reduce1DDiff(float *g_idata1, float *g_idata2, float *g_odata, i
     }
 }
 
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce1DDiv(float *g_idata1, float *g_idata2, float *g_odata, int N){
     extern __shared__ float sdata[];
     // each thread loads one element from global to shared mem
     unsigned int tid = threadIdx.x;
-    int i = blockIdx.x*blockSize + threadIdx.x;
-    const int gridSize = blockSize*gridDim.x;
+    int i = blockIdx.x*BLK_SZ + threadIdx.x;
+    const int gridSize = BLK_SZ*gridDim.x;
     float x;
     float y;
     sdata[tid] = 0;
@@ -1468,19 +1468,19 @@ __global__ void reduce1DDiv(float *g_idata1, float *g_idata2, float *g_odata, in
     }
     __syncthreads();
     // do reduction in shared mem
-    if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; }
+    if (BLK_SZ >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; }
        	__syncthreads(); }
-    if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; }
+    if (BLK_SZ >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; }
 	__syncthreads(); }
-    if (blockSize >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; }
+    if (BLK_SZ >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; }
 	__syncthreads(); }
     if (tid < 32) {
-	if (blockSize >= 64){ sdata[tid] += sdata[tid + 32]; }
-	if (blockSize >= 32){ sdata[tid] += sdata[tid + 16]; }
-	if (blockSize >= 16){ sdata[tid] += sdata[tid + 8]; }
-	if (blockSize >= 8){ sdata[tid] += sdata[tid + 4]; }
-	if (blockSize >= 4){ sdata[tid] += sdata[tid + 2]; }
-	if (blockSize >= 2){ sdata[tid] += sdata[tid + 1]; }
+	if (BLK_SZ >= 64){ sdata[tid] += sdata[tid + 32]; }
+	if (BLK_SZ >= 32){ sdata[tid] += sdata[tid + 16]; }
+	if (BLK_SZ >= 16){ sdata[tid] += sdata[tid + 8]; }
+	if (BLK_SZ >= 8){ sdata[tid] += sdata[tid + 4]; }
+	if (BLK_SZ >= 4){ sdata[tid] += sdata[tid + 2]; }
+	if (BLK_SZ >= 2){ sdata[tid] += sdata[tid + 1]; }
     }
 
     // write result for this block to global mem
@@ -1489,65 +1489,65 @@ __global__ void reduce1DDiv(float *g_idata1, float *g_idata2, float *g_odata, in
     }
 }
 
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce2D(float *g_idata, float *g_odata, int N){
     extern __shared__ float sdata[];
     // each thread loads one element from global to shared mem
     unsigned int tid = threadIdx.x;
-    int i = blockIdx.x*blockSize*2 + threadIdx.x;
+    int i = blockIdx.x*BLK_SZ*2 + threadIdx.x;
     const unsigned int offset = blockIdx.y*N;
-    const unsigned int gridSize = blockSize*2*gridDim.x;
-    int n = N - blockSize;
+    const unsigned int gridSize = BLK_SZ*2*gridDim.x;
+    int n = N - BLK_SZ;
     sdata[tid] = 0;
-    while (i < n) { sdata[tid] += g_idata[i+offset] + g_idata[i+offset+blockSize]; i += gridSize; }
+    while (i < n) { sdata[tid] += g_idata[i+offset] + g_idata[i+offset+BLK_SZ]; i += gridSize; }
     if(i<N)
 	sdata[tid] += g_idata[i+offset];
     __syncthreads();
     // do reduction in shared mem
-    if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; } __syncthreads(); }
-    if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; } __syncthreads(); }
-    if (blockSize >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; } __syncthreads(); }
+    if (BLK_SZ >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; } __syncthreads(); }
+    if (BLK_SZ >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; } __syncthreads(); }
+    if (BLK_SZ >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; } __syncthreads(); }
     if (tid < 32) {
-	if (blockSize >= 64) sdata[tid] += sdata[tid + 32];
-	if (blockSize >= 32) sdata[tid] += sdata[tid + 16];
-	if (blockSize >= 16) sdata[tid] += sdata[tid + 8];
-	if (blockSize >= 8) sdata[tid] += sdata[tid + 4];
-	if (blockSize >= 4) sdata[tid] += sdata[tid + 2];
-	if (blockSize >= 2) sdata[tid] += sdata[tid + 1];
+	if (BLK_SZ >= 64) sdata[tid] += sdata[tid + 32];
+	if (BLK_SZ >= 32) sdata[tid] += sdata[tid + 16];
+	if (BLK_SZ >= 16) sdata[tid] += sdata[tid + 8];
+	if (BLK_SZ >= 8) sdata[tid] += sdata[tid + 4];
+	if (BLK_SZ >= 4) sdata[tid] += sdata[tid + 2];
+	if (BLK_SZ >= 2) sdata[tid] += sdata[tid + 1];
     }
 
     // write result for this block to global mem
     if (tid == 0) g_odata[blockIdx.x + blockIdx.y*gridDim.x] = sdata[0];
 }
 
-template <unsigned int blockSize>
+template <unsigned int BLK_SZ>
 __global__ void reduce2DStrided(float *g_idata, float *g_odata, int N, int stride){
     extern __shared__ float sdata[];
     // each thread loads one element from global to shared mem
     unsigned int tid = threadIdx.x;
-    int i = blockIdx.x*blockSize*2 + threadIdx.x;
+    int i = blockIdx.x*BLK_SZ*2 + threadIdx.x;
     const unsigned int offset = blockIdx.y;
-    const unsigned int gridSize = blockSize*2*gridDim.x;
-    int n = N - blockSize;
+    const unsigned int gridSize = BLK_SZ*2*gridDim.x;
+    int n = N - BLK_SZ;
     sdata[tid] = 0;
     while (i < n) {
-	sdata[tid] += g_idata[i*stride+offset] + g_idata[(i+blockSize)*stride+offset];
+	sdata[tid] += g_idata[i*stride+offset] + g_idata[(i+BLK_SZ)*stride+offset];
        	i += gridSize;
     }
     if(i<N)
 	sdata[tid] += g_idata[i*stride+offset];
     __syncthreads();
     // do reduction in shared mem
-    if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; } __syncthreads(); }
-    if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; } __syncthreads(); }
-    if (blockSize >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; } __syncthreads(); }
+    if (BLK_SZ >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; } __syncthreads(); }
+    if (BLK_SZ >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; } __syncthreads(); }
+    if (BLK_SZ >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; } __syncthreads(); }
     if (tid < 32) {
-	if (blockSize >= 64) sdata[tid] += sdata[tid + 32];
-	if (blockSize >= 32) sdata[tid] += sdata[tid + 16];
-	if (blockSize >= 16) sdata[tid] += sdata[tid + 8];
-	if (blockSize >= 8) sdata[tid] += sdata[tid + 4];
-	if (blockSize >= 4) sdata[tid] += sdata[tid + 2];
-	if (blockSize >= 2) sdata[tid] += sdata[tid + 1];
+	if (BLK_SZ >= 64) sdata[tid] += sdata[tid + 32];
+	if (BLK_SZ >= 32) sdata[tid] += sdata[tid + 16];
+	if (BLK_SZ >= 16) sdata[tid] += sdata[tid + 8];
+	if (BLK_SZ >= 8) sdata[tid] += sdata[tid + 4];
+	if (BLK_SZ >= 4) sdata[tid] += sdata[tid + 2];
+	if (BLK_SZ >= 2) sdata[tid] += sdata[tid + 1];
     }
 
     // write result for this block to global mem

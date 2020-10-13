@@ -6,7 +6,7 @@
 
 #include "RDLWavelet.h"
 
-const int BLOCKSIZE = 16;
+const int BLK_SZ = 16;
 
 __constant__ float SincKernel[24];
 
@@ -63,10 +63,10 @@ RDLWavelet::RDLWavelet(int r, int c, int d) : rows_(r), cols_(c), dir_(d), cudaS
     cudaCheckError(cudaEventCreate(&stopEvent_));
 
     // CUDA thread hirearchy
-    threadPerBlock_.x = BLOCKSIZE;
-    threadPerBlock_.y = BLOCKSIZE;
-    blockPerGrid_.x = iDiv(c, BLOCKSIZE);
-    blockPerGrid_.y = iDiv(r, BLOCKSIZE);
+    threadPerBlock_.x = BLK_SZ;
+    threadPerBlock_.y = BLK_SZ;
+    blockPerGrid_.x = iDiv(c, BLK_SZ);
+    blockPerGrid_.y = iDiv(r, BLK_SZ);
 
     // CUDA stream
     cudaCheckError(cudaStreamCreate(&CudaStream_));    // used for hide data transfer latency with kernel computing

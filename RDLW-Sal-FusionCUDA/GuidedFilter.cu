@@ -19,8 +19,8 @@ namespace IVFusion
         cudaCheckError(cudaMalloc(&d_tempA_, sizeof(float) * r * c));
         cudaCheckError(cudaMalloc(&d_tempB_, sizeof(float) * r * c));
 
-        blockPerGrid = dim3(iDiv(c, BLOCKSIZE), iDiv(r, BLOCKSIZE));
-        threadPerBlock = dim3(BLOCKSIZE, BLOCKSIZE);
+        blockPerGrid = dim3(iDiv(c, BLK_SZ), iDiv(r, BLK_SZ));
+        threadPerBlock = dim3(BLK_SZ, BLK_SZ);
     }
 
     GuidedFilter::~GuidedFilter()

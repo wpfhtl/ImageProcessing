@@ -2,9 +2,9 @@
 
 #define cudaErrorCheck(err) __checkCUDAError(err, __FILE__, __LINE__)
 
-#define BLOCKSIZE 16   // = 16 is almost the best one
+#define BLK_SZ 16   // = 16 is almost the best one
 #define FILTERRAD 5
-#define TILE_WIDTH (BLOCKSIZE + 2 * FILTERRAD)
+#define TILE_WIDTH (BLK_SZ + 2 * FILTERRAD)
 
 #define INDX(r, c, w) ((r) * (w) + (c))
 
@@ -238,7 +238,7 @@ __global__ void gaussfilterSepRow_kernel(float *imgOut, float *imgIn, int wid, i
     //int filterR = (filterW - 1) / 2;
 
     //extern __shared__ float shareMem[];
-    __shared__ float shareMem[BLOCKSIZE * TILE_WIDTH];
+    __shared__ float shareMem[BLK_SZ * TILE_WIDTH];
 
     int x, y;
 
@@ -284,32 +284,32 @@ __global__ void gaussfilterSepCol_kernel(float *imgOut, float *imgIn, int wid, i
     int filterR = (filterW - 1) / 2;
 
     //extern __shared__ float shareMem[];
-    __shared__ float shareMem[TILE_WIDTH * BLOCKSIZE];
+    __shared__ float shareMem[TILE_WIDTH * BLK_SZ];
 
     int x, y;
     // case 1 : top apron
     y = idy - FILTERRAD;
     x = idx;
     if(y < 0)
-        shareMem[INDX(y0, x0, BLOCKSIZE)] = 0;
+        shareMem[INDX(y0, x0, BLK_SZ)] = 0;
     else
-        shareMem[INDX(y0, x0, BLOCKSIZE)] = imgIn[INDX(y, x, wid)];
+        shareMem[INDX(y0, x0, BLK_SZ)] = imgIn[INDX(y, x, wid)];
 
     // case 2 : bottom apron
     y = idy + FILTERRAD;
     x = idx;
     if(y >= hei)
-        shareMem[INDX(y0 + 2 * FILTERRAD, x0, BLOCKSIZE)] = 0;
+        shareMem[INDX(y0 + 2 * FILTERRAD, x0, BLK_SZ)] = 0;
     else
-        shareMem[INDX(y0 + 2 * FILTERRAD, x0, BLOCKSIZE)] = imgIn[INDX(y, x, wid)];
+        shareMem[INDX(y0 + 2 * FILTERRAD, x0, BLK_SZ)] = imgIn[INDX(y, x, wid)];
 
     __syncthreads();
 
     float val = 0.f;
 #pragma unroll
     for(int i = 0; i < filterW; ++i)
-        //val += shareMem[INDX(y0 + i, x0, BLOCKSIZE)] * filter[i];
-        val += __fmul_rd(shareMem[INDX(y0+i, x0, BLOCKSIZE)], filter[i]);
+        //val += shareMem[INDX(y0 + i, x0, BLK_SZ)] * filter[i];
+        val += __fmul_rd(shareMem[INDX(y0+i, x0, BLK_SZ)], filter[i]);
 
     imgOut[INDX(idy, idx, wid)] = val;
 }
@@ -413,7 +413,7 @@ void GFilter::gaussfilterGlo(float *imgOut, float *imgIn, int wid, int hei, floa
     createfilter();
     prepareMemory(imgIn, wid, hei);
 
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
 
     blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
@@ -458,7 +458,7 @@ void GFilter::gaussfilterTex(float *imgOut, float *imgIn, int wid, int hei, floa
     // bind the texture to 2D Pitch
     cudaErrorCheck(cudaBindTexture2D(NULL, texIn, d_imgIn_Pitch, channelDesc, wid, hei, pitch));
 
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
 
     blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
@@ -489,7 +489,7 @@ void GFilter::gaussfilterSha(float *imgOut, float *imgIn, int wid, int hei, floa
     prepareMemory(imgIn, wid, hei);
 
 
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
     blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
     blockPerGrid.y = (hei + threadPerBlock.y - 1) / threadPerBlock.y;
@@ -520,7 +520,7 @@ void GFilter::gaussfilterSep(float *imgOut, float *imgIn, int wid, int hei, floa
     prepareMemory(imgIn, wid, hei);
 
 
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
     blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
     blockPerGrid.y = (hei + threadPerBlock.y - 1) / threadPerBlock.y;
@@ -583,7 +583,7 @@ void GFilter::gaussfilterShaSep(float *imgOut, float *imgIn, int wid, int hei, f
     */
 
     // prepare kernel launch
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
     blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
     blockPerGrid.y = (hei + threadPerBlock.y - 1) / threadPerBlock.y;
@@ -609,13 +609,13 @@ void GFilter::gaussfilterShaSep(float *imgOut, float *imgIn, int wid, int hei, f
     cudaEventRecord(start, 0);
 
     // do row filtering
-    //gaussfilterSepRow_kernel<<<blockPerGrid, threadPerBlock, sizeof(float) * TILE_WIDTH * BLOCKSIZE>>>(d_temp, d_imgIn_, wid, hei, d_filterRow, filterW_);
+    //gaussfilterSepRow_kernel<<<blockPerGrid, threadPerBlock, sizeof(float) * TILE_WIDTH * BLK_SZ>>>(d_temp, d_imgIn_, wid, hei, d_filterRow, filterW_);
     gaussfilterSepRow_kernel<<<blockPerGrid, threadPerBlock>>>(d_temp, d_imgIn_, wid, hei, d_filterRow, filterW_);
     cout << "At separable gauss filter Row Part : " << cudaGetErrorString(cudaPeekAtLastError()) << endl;
     //cout << __FUNCTION__ << " : " << cudaGetErrorString(cudaPeekAtLastError()) << endl;
 
     // do col filtering
-    //gaussfilterSepCol_kernel<<<blockPerGrid, threadPerBlock, sizeof(float) * TILE_WIDTH * BLOCKSIZE>>>(d_imgOut_, d_temp, wid, hei, d_filterCol, filterW_);
+    //gaussfilterSepCol_kernel<<<blockPerGrid, threadPerBlock, sizeof(float) * TILE_WIDTH * BLK_SZ>>>(d_imgOut_, d_temp, wid, hei, d_filterCol, filterW_);
     gaussfilterSepCol_kernel<<<blockPerGrid, threadPerBlock>>>(d_imgOut_, d_temp, wid, hei, d_filterCol, filterW_);
     cout << "At separable gauss filter Col Part : " << cudaGetErrorString(cudaPeekAtLastError()) << endl;
 

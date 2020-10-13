@@ -63,7 +63,7 @@ __global__ void multadd_kernel(float *out, float *inA, float *inB, float *inC, f
 
 void TwoScaleRec::multadd(float *d_Out, float *inA, float *inB, float *inC, float *inD, int wid, int hei)
 {
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
     blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
     blockPerGrid.y = (hei + threadPerBlock.y - 1) / threadPerBlock.y;

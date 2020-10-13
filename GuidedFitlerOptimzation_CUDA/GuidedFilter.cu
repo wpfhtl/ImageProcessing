@@ -1,7 +1,7 @@
 #include "GuidedFilter.h"
 #include "helper_math.h"
 
-#define BLOCKSIZE 32   // BLOCKSIZE * BLOCKSIZE threads per block
+#define BLK_SZ 32   // BLK_SZ * BLK_SZ threads per block
 
 using namespace std;
 using namespace cv;
@@ -511,10 +511,10 @@ void GFilter::boxfilterTempC(float4* imgIO)
     cudaEventRecord(start);
     // use texture for horizontal pass
     //dim3 blockPerGrid = ;
-    d_box_P_x<<<iDiv(row_, BLOCKSIZE), BLOCKSIZE, 0>>>(tempData_, row_, col_, rad_, pitch_);   // use row_ / BLOCKSIZE, because the input is transposed.
-    //d_boxfilter_rgb_x<<<iDiv(row_, BLOCKSIZE), BLOCKSIZE, 0>>>(outDataD, row_, col_, rad);
-    //testTexture<<<row_ / BLOCKSIZE, BLOCKSIZE, 0>>>(outDataD, row_, col_);     // The Result is transposed of input matrix
-    d_boxfilter_rgb_y<<<iDiv(col_, BLOCKSIZE), BLOCKSIZE, 0>>>(imgIO, tempData_, row_, col_, rad_, pitch_);
+    d_box_P_x<<<iDiv(row_, BLK_SZ), BLK_SZ, 0>>>(tempData_, row_, col_, rad_, pitch_);   // use row_ / BLK_SZ, because the input is transposed.
+    //d_boxfilter_rgb_x<<<iDiv(row_, BLK_SZ), BLK_SZ, 0>>>(outDataD, row_, col_, rad);
+    //testTexture<<<row_ / BLK_SZ, BLK_SZ, 0>>>(outDataD, row_, col_);     // The Result is transposed of input matrix
+    d_boxfilter_rgb_y<<<iDiv(col_, BLK_SZ), BLK_SZ, 0>>>(imgIO, tempData_, row_, col_, rad_, pitch_);
     //cout << cudaGetErrorString(cudaPeekAtLastError()) << endl;
 
     cudaEventRecord(stop);
@@ -533,13 +533,13 @@ void GFilter::boxfilterImgI(float4 *imgIO)
 
     //cudaEventRecord(start);
     // use texture for horizontal pass
-    d_box_I_x<<<iDiv(row_, BLOCKSIZE), BLOCKSIZE, 0>>>(tempData_, row_, col_, rad_, pitch_);   // use row_ / BLOCKSIZE, because the input is transposed.
+    d_box_I_x<<<iDiv(row_, BLK_SZ), BLK_SZ, 0>>>(tempData_, row_, col_, rad_, pitch_);   // use row_ / BLK_SZ, because the input is transposed.
     // below one is correct
-    //d_box_I_x<<<iDiv(row_, BLOCKSIZE), BLOCKSIZE, 0>>>(imgIO, row_, col_, rad_, pitch_);   // use row_ / BLOCKSIZE, because the input is transposed.
+    //d_box_I_x<<<iDiv(row_, BLK_SZ), BLK_SZ, 0>>>(imgIO, row_, col_, rad_, pitch_);   // use row_ / BLK_SZ, because the input is transposed.
 
-    d_boxfilter_rgb_y<<<iDiv(col_, BLOCKSIZE), BLOCKSIZE, 0>>>(imgIO, tempData_, row_, col_, rad_, pitch_);
+    d_boxfilter_rgb_y<<<iDiv(col_, BLK_SZ), BLK_SZ, 0>>>(imgIO, tempData_, row_, col_, rad_, pitch_);
     // below one is correct
-    //d_boxfilter_rgb_y<<<iDiv(col_, BLOCKSIZE), BLOCKSIZE, 0>>>(imgIO, tempB_, row_, col_, rad_, pitch_);
+    //d_boxfilter_rgb_y<<<iDiv(col_, BLK_SZ), BLK_SZ, 0>>>(imgIO, tempB_, row_, col_, rad_, pitch_);
     //cout << cudaGetErrorString(cudaPeekAtLastError()) << endl;
 
     //cudaEventRecord(stop);
@@ -557,23 +557,23 @@ void GFilter::boxfilterMultiple(float4 *corrI, float4 *corrIp)
     //cudaEventCreate(&start);
     //cudaEventCreate(&stop);
 
-    dim3 blockPerGrid = iDiv(row_, BLOCKSIZE);
-    dim3 threadPerBlock = BLOCKSIZE;
+    dim3 blockPerGrid = iDiv(row_, BLK_SZ);
+    dim3 threadPerBlock = BLK_SZ;
 
     //cudaEventRecord(start);
     // use texture for horizontal pass
     // calculate corrI
-    d_square_box_I_x<<<blockPerGrid, threadPerBlock, 0>>>(tempData_, row_, col_, rad_, pitch_);   // use row_ / BLOCKSIZE, because the input is transposed.
-    //testTexture<<<row_ / BLOCKSIZE, BLOCKSIZE, 0>>>(outDataD, row_, col_);     // The Result is transposed of input matrix
-    d_boxfilter_rgb_y<<<blockPerGrid, BLOCKSIZE, 0>>>(corrI, tempData_, row_, col_, rad_, pitch_);
-    //d_square_box_y<<<blockPerGrid, BLOCKSIZE, 0>>>(corrI, tempData_, row_, col_, rad_, pitch_);
+    d_square_box_I_x<<<blockPerGrid, threadPerBlock, 0>>>(tempData_, row_, col_, rad_, pitch_);   // use row_ / BLK_SZ, because the input is transposed.
+    //testTexture<<<row_ / BLK_SZ, BLK_SZ, 0>>>(outDataD, row_, col_);     // The Result is transposed of input matrix
+    d_boxfilter_rgb_y<<<blockPerGrid, BLK_SZ, 0>>>(corrI, tempData_, row_, col_, rad_, pitch_);
+    //d_square_box_y<<<blockPerGrid, BLK_SZ, 0>>>(corrI, tempData_, row_, col_, rad_, pitch_);
     cout << cudaGetErrorString(cudaPeekAtLastError()) << endl;
 
     // calculate corrIp
-    d_square_box_Ip_x<<<blockPerGrid, threadPerBlock, 0>>>(tempData_, row_, col_, rad_, pitch_);   // use row_ / BLOCKSIZE, because the input is transposed.
-    //d_boxfilter_rgb_x<<<iDiv(row_, BLOCKSIZE), BLOCKSIZE, 0>>>(outDataD, row_, col_, rad);
-    d_boxfilter_rgb_y<<<blockPerGrid, BLOCKSIZE, 0>>>(corrIp, tempData_, row_, col_, rad_, pitch_);
-    //d_square_box_y<<<blockPerGrid, BLOCKSIZE, 0>>>(corrIp, tempData_, row_, col_, rad_, pitch_);
+    d_square_box_Ip_x<<<blockPerGrid, threadPerBlock, 0>>>(tempData_, row_, col_, rad_, pitch_);   // use row_ / BLK_SZ, because the input is transposed.
+    //d_boxfilter_rgb_x<<<iDiv(row_, BLK_SZ), BLK_SZ, 0>>>(outDataD, row_, col_, rad);
+    d_boxfilter_rgb_y<<<blockPerGrid, BLK_SZ, 0>>>(corrIp, tempData_, row_, col_, rad_, pitch_);
+    //d_square_box_y<<<blockPerGrid, BLK_SZ, 0>>>(corrIp, tempData_, row_, col_, rad_, pitch_);
     cout << cudaGetErrorString(cudaPeekAtLastError()) << endl;
 
     //cudaEventRecord(stop);
@@ -618,7 +618,7 @@ void GFilter::boxfilterTest(cv::Mat &imgOut, const cv::Mat &imgIn, int rad)
 
     boxfilterImgI(tempA_);
     //boxfilterTempC(tempA_);
-    //testTexture<<<iDiv(row_, BLOCKSIZE), BLOCKSIZE, 0>>>(tempA_, row_, col_, pitch_);
+    //testTexture<<<iDiv(row_, BLK_SZ), BLK_SZ, 0>>>(tempA_, row_, col_, pitch_);
 
 
     cudaEventRecord(stop);
@@ -702,8 +702,8 @@ void GFilter::guidedfilterDouble(cv::Mat &imgOut, const cv::Mat &imgInI, const c
     cout << "Eps = " << eps_ << endl;
     initTexture(imgInI, imgInP);
 
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
-    dim3 blockPerGrid(iDiv(col_, BLOCKSIZE), iDiv(row_, BLOCKSIZE));     // dim3(width, height) ! ! !
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
+    dim3 blockPerGrid(iDiv(col_, BLK_SZ), iDiv(row_, BLK_SZ));     // dim3(width, height) ! ! !
 
     cudaEventRecord(startEvent_);
     // Step 1

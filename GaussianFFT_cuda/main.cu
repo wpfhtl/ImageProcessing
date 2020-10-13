@@ -16,7 +16,7 @@ using namespace std;
 using namespace cv;
 
 #define SIGMA 120
-#define BLOCKSIZE 16
+#define BLK_SZ 16
 
 __global__ void CreateGaussian_kernel(float *d_io, double sigma, int wid, int hei)
 {
@@ -39,10 +39,10 @@ __global__ void CreateGaussian_kernel(float *d_io, double sigma, int wid, int he
 
 void CreateGaussain(float *d_filterData, double sigma, int wid, int hei)
 {
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
-    blockPerGrid.x = (wid + BLOCKSIZE - 1) / BLOCKSIZE;
-    blockPerGrid.y = (hei + BLOCKSIZE - 1) / BLOCKSIZE;
+    blockPerGrid.x = (wid + BLK_SZ - 1) / BLK_SZ;
+    blockPerGrid.y = (hei + BLK_SZ - 1) / BLK_SZ;
     CreateGaussian_kernel<<<blockPerGrid, threadPerBlock>>>(d_filterData, sigma, wid, hei);
     cout << cudaGetErrorString(cudaPeekAtLastError()) << endl;
 }
@@ -75,12 +75,12 @@ __global__ void modulateAndNormalize_kernel(cufftComplex *d_out, cufftComplex *d
 
 void modulateAndNormalize(cufftComplex *d_out, cufftComplex *d_in, int wid, int hei)
 {
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
     int fftWid = (wid >> 1) + 1;
     cout << "fftWid = " << fftWid << endl;
-    blockPerGrid.x = (fftWid + BLOCKSIZE - 1) / BLOCKSIZE;
-    blockPerGrid.y = (hei + BLOCKSIZE - 1) / BLOCKSIZE;
+    blockPerGrid.x = (fftWid + BLK_SZ - 1) / BLK_SZ;
+    blockPerGrid.y = (hei + BLK_SZ - 1) / BLK_SZ;
 
     modulateAndNormalize_kernel<<<blockPerGrid, threadPerBlock>>>(d_out, d_in, 1.0f / (float)(wid * hei), wid, hei);
     cout << "Scale in gaussian : " << 1.0f / (float)(wid * hei) << endl;

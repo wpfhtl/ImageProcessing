@@ -12,8 +12,8 @@ namespace IVFusion
 {
     WeightedMap::WeightedMap(int r, int c): rows_(r), cols_(c)
     {
-        threadPerBlock = dim3(BLOCKSIZE, BLOCKSIZE);
-        blockPerGrid = dim3(iDiv(c, BLOCKSIZE), iDiv(r, BLOCKSIZE));
+        threadPerBlock = dim3(BLK_SZ, BLK_SZ);
+        blockPerGrid = dim3(iDiv(c, BLK_SZ), iDiv(r, BLK_SZ));
 
         cudaCheckError(cudaMalloc(&d_salA_, sizeof(float) * rows_ * cols_));
         cudaCheckError(cudaMalloc(&d_salB_, sizeof(float) * rows_ * cols_));

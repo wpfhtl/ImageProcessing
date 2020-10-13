@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 list(APPEND CUDA_NVCC_FLAGS "-std=c++11 --keep --gpu-architecture=sm_50")
 #list(APPEND CUDA_NVCC_FLAGS "-std=c++11 --keep")
 
-include(/usr/share/cmake-3.2/Modules/FindCUDA.cmake)
+include(/usr/share/cmake-3.10/Modules/FindCUDA.cmake)
 
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})

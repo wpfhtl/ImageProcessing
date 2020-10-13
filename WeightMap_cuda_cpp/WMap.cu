@@ -44,7 +44,7 @@ __global__ void laplacianAbs_kernel(float *out, float *in, int wid, int hei, con
     extern __shared__ float shareMem[];
 
     //int TILEW = blockDim.x + 2 * lr;
-    int TILEW = BLOCKSIZE + 2 * lr;
+    int TILEW = BLK_SZ + 2 * lr;
 
     int x, y;
     // copy data from global memory to shared memory, zero extends the border
@@ -107,7 +107,7 @@ __global__ void gaussfilterRow_kernel(float *out, float *in, int wid, int hei, c
     extern __shared__ float shareMem[];
 
     int x, y;
-    int TILEW = BLOCKSIZE + 2 * gr;
+    int TILEW = BLK_SZ + 2 * gr;
     // case 1 : left apron
     x = idx - gr;
     y = idy;
@@ -145,7 +145,7 @@ __global__ void gaussfilterCol_kernel(float *out, float *in, int wid, int hei, f
     if (idx >= wid || idy >= hei)
         return;
 
-    //__shared__ float shareMem[ * BLOCKSIZE];
+    //__shared__ float shareMem[ * BLK_SZ];
     extern __shared__ float shareMem[];
 
     int x, y;
@@ -153,25 +153,25 @@ __global__ void gaussfilterCol_kernel(float *out, float *in, int wid, int hei, f
     y = idy - filterR;
     x = idx;
     if(y < 0)
-        shareMem[INDX(y0, x0, BLOCKSIZE)] = 0;
+        shareMem[INDX(y0, x0, BLK_SZ)] = 0;
     else
-        shareMem[INDX(y0, x0, BLOCKSIZE)] = in[INDX(y, x, wid)];
+        shareMem[INDX(y0, x0, BLK_SZ)] = in[INDX(y, x, wid)];
 
     // case 2 : bottom apron
     y = idy + filterR;
     x = idx;
     if(y >= hei)
-        shareMem[INDX(y0 + 2 * filterR, x0, BLOCKSIZE)] = 0;
+        shareMem[INDX(y0 + 2 * filterR, x0, BLK_SZ)] = 0;
     else
-        shareMem[INDX(y0 + 2 * filterR, x0, BLOCKSIZE)] = in[INDX(y, x, wid)];
+        shareMem[INDX(y0 + 2 * filterR, x0, BLK_SZ)] = in[INDX(y, x, wid)];
 
     __syncthreads();
 
     float val = 0.f;
 #pragma unroll
     for(int i = 0; i < GaussW; ++i)
-        //val += shareMem[INDX(y0 + i, x0, BLOCKSIZE)] * filter[i];
-        val += __fmul_rd(shareMem[INDX(y0+i, x0, BLOCKSIZE)], filter[i]);
+        //val += shareMem[INDX(y0 + i, x0, BLK_SZ)] * filter[i];
+        val += __fmul_rd(shareMem[INDX(y0+i, x0, BLK_SZ)], filter[i]);
 
     out[INDX(idy, idx, wid)] = val;
 }
@@ -219,13 +219,13 @@ void WMap::laplacianAbs(float *d_imgOut, float *d_imgIn, int wid, int hei, int l
     cudaCheckErrors(cudaMemcpy(d_lap_, lapfilter, sizeof(float) * lw * lw, cudaMemcpyHostToDevice));
 
     // do kernel on GPU
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
     blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
     blockPerGrid.y = (hei + threadPerBlock.y - 1) / threadPerBlock.y;
 
     // launch kernel function
-    int TileW = BLOCKSIZE + 2 * lr;
+    int TileW = BLK_SZ + 2 * lr;
     laplacianAbs_kernel<<<blockPerGrid, threadPerBlock, sizeof(float) * TileW * TileW, st>>>(d_imgOut, d_imgIn, wid, hei, d_lap_, lr);
 
     cout << "Laplacian filter : " << cudaGetErrorString(cudaPeekAtLastError()) << endl;
@@ -279,17 +279,17 @@ void WMap::gaussian(float *d_imgOut, float *d_imgIn, int wid, int hei, int gr, i
     cudaCheckErrors(cudaMalloc((void **)&d_temp, sizeof(float) * wid * hei));
     cudaCheckErrors(cudaMemset(d_temp, 0, sizeof(float) * wid * hei));
 
-    int TileW = BLOCKSIZE + 2 * gr;
+    int TileW = BLK_SZ + 2 * gr;
 
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
     blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
     blockPerGrid.y = (hei + threadPerBlock.y - 1) / threadPerBlock.y;
 
-    gaussfilterRow_kernel<<<blockPerGrid, threadPerBlock, sizeof(float) * TileW * BLOCKSIZE, st>>>(d_temp, d_imgIn, wid, hei, d_gau_, gr);
+    gaussfilterRow_kernel<<<blockPerGrid, threadPerBlock, sizeof(float) * TileW * BLK_SZ, st>>>(d_temp, d_imgIn, wid, hei, d_gau_, gr);
     cout << "In gaussian filter ROW part : " << cudaGetErrorString(cudaPeekAtLastError()) << endl;
 
-    gaussfilterCol_kernel<<<blockPerGrid, threadPerBlock, sizeof(float) * TileW * BLOCKSIZE, st>>>(d_imgOut, d_temp, wid, hei, d_gau_, gr);
+    gaussfilterCol_kernel<<<blockPerGrid, threadPerBlock, sizeof(float) * TileW * BLK_SZ, st>>>(d_imgOut, d_temp, wid, hei, d_gau_, gr);
     cout << "In gaussian filter COL part : " << cudaGetErrorString(cudaPeekAtLastError()) << endl;
 
     cudaStreamDestroy(st);
@@ -361,7 +361,7 @@ void WMap::weightedmap(float *d_imgOutA, float *d_imgOutB, float *d_imgInA, floa
     gaussian(d_tempA_, d_tempA_, wid, hei, gr, gsigma);
     gaussian(d_tempB_, d_tempB_, wid, hei, gr, gsigma);
 
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
     blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
     blockPerGrid.y = (hei + threadPerBlock.y - 1) / threadPerBlock.y;
@@ -430,7 +430,7 @@ void WMap::weightedmapTest(float *imgOutA, float *imgOutB, float *imgInA, float 
     gaussian(d_tempA_, d_tempA_, wid, hei, gr, gsigma);
     gaussian(d_tempB_, d_tempB_, wid, hei, gr, gsigma);
 
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
     blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
     blockPerGrid.y = (hei + threadPerBlock.y - 1) / threadPerBlock.y;
@@ -451,7 +451,7 @@ void WMap::weightedmapTest(float *imgOutA, float *imgOutB, float *imgInA, float 
     gaussian(d_tempA_, d_tempA_, wid, hei, gr, gsigma);
     gaussian(d_tempB_, d_tempB_, wid, hei, gr, gsigma);
 
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
     blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
     blockPerGrid.y = (hei + threadPerBlock.y - 1) / threadPerBlock.y;

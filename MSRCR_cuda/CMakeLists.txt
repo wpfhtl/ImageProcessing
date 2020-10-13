@@ -16,7 +16,7 @@ include_directories(/usr/local/include/)
 include_directories(/usr/local/cuda)
 include_directories(${Boost_INCLUDE_DIR})
 
-include(/usr/share/cmake-3.2/Modules/FindCUDA.cmake)
+include(/usr/share/cmake-3.10/Modules/FindCUDA.cmake)
 
 cuda_add_executable(MSRCR ${SOURCE_FILES})
 

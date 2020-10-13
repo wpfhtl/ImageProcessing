@@ -15,7 +15,7 @@ set(CMAKE_CXX_STANDARD 11)
     #OUTPUT_VARIABLE FINDCUDA)
 #message(STATUS "find cuda.cmake version is : ${FINDCUDA}")
 #include(/usr/share/${FINDCUDA}/Modules/FindCUDA.cmake)
-#include(/usr/share/cmake-3.2/Modules/FindCUDA.cmake)
+#include(/usr/share/cmake-3.10/Modules/FindCUDA.cmake)
 #add_definitions(-std=c++11)
 
 find_package(OpenCV REQUIRED)

@@ -19,7 +19,7 @@
 using namespace std;
 using namespace cv;
 
-#define BLOCKSIZE 16
+#define BLK_SZ 16
 
 class TwoScaleRec
 {

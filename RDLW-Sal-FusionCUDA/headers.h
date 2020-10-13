@@ -24,7 +24,7 @@ int iDiv(int a, int b);
 
 namespace IVFusion
 {
-    const int BLOCKSIZE = 16;         // only internal linkage, non-const variables have external linkage.
+    const int BLK_SZ = 16;         // only internal linkage, non-const variables have external linkage.
     /**
       // leading to multiple difinition of __cudaCheckError & iDiv.
       // see:

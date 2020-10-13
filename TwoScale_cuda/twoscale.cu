@@ -1,6 +1,6 @@
 #include "twoscale.h"
 
-#define BLOCKSIZE 16
+#define BLK_SZ 16
 #define cudaCheckError(err) __cudaCheckError(err, __FILE__, __LINE__)
 
 inline void __cudaCheckError(cudaError_t err, const char *file, int line)
@@ -260,7 +260,7 @@ void TScale::twoscaleTest(float *imgOutA, float *imgOutB, float *imgIn, int wid,
 	boxfilter(d_imgOutB, d_imgIn, wid, hei, filterR);
 
 	// get the high pass coefficients
-	dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+	dim3 threadPerBlock(BLK_SZ, BLK_SZ);
 	dim3 blockPerGrid;
 	blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
 	blockPerGrid.y = (hei + threadPerBlock.y - 1) / threadPerBlock.y;

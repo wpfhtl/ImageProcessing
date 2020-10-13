@@ -26,7 +26,7 @@
 using namespace std;
 using namespace cv;
 
-#define BLOCKSIZE 16
+#define BLK_SZ 16
 #define INDX(r, c, w) ((r) * (w) + (c))
 
 #define cudaCheckErrors(err) __cudaCheckErrors(err, __FILE__, __LINE__)

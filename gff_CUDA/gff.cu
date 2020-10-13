@@ -105,10 +105,10 @@ void GFF::Merge(float *d_imgOut, vector<float *> &d_imgInS, vector<float *> &d_w
     cudaCheckErrors(cudaMalloc((void **)&d_temp, sizeof(float) * wid * hei));
     cudaCheckErrors(cudaMemset(d_temp, 0, sizeof(float) * wid * hei));
 
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
-    blockPerGrid.x = (wid + BLOCKSIZE - 1) / BLOCKSIZE;
-    blockPerGrid.y = (hei + BLOCKSIZE - 1) / BLOCKSIZE;
+    blockPerGrid.x = (wid + BLK_SZ - 1) / BLK_SZ;
+    blockPerGrid.y = (hei + BLK_SZ - 1) / BLK_SZ;
     multAddTwo_kernel<<<blockPerGrid, threadPerBlock>>>(d_temp, d_imgInS[0], d_wmapInS[0], d_imgInS[1], d_wmapInS[1], wid, hei);  // Base layer
     multAddTri_kernel<<<blockPerGrid, threadPerBlock>>>(d_imgOut, d_temp, d_imgInS[2], d_wmapInS[2], d_imgInS[3], d_wmapInS[3], wid, hei);  // Detail layer
 

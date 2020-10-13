@@ -44,6 +44,7 @@ private:
     void boxfilterMultiple(float4* corrI, float4* corrIp);
     void gaussianfilter(float* imgOut_d, const float* imgIn_d, int rad, double sig);
     void restoreFromFloat4(float* out, float* in);
+    void releaseTexture();
 
     int row_, col_;   // unit: pixel, NOT Byte
     int rad_ = 0;

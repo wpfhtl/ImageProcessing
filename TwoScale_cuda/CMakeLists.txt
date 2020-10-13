@@ -6,7 +6,7 @@ message(STATUS "Project directory : ${PROJECT_SOURCE_DIR}")
 set(CMAKE_CXX_STANDARD 11)
 
 include_directories(./)
-include(/usr/share/cmake-3.2/Modules/FindCUDA.cmake)
+include(/usr/share/cmake-3.10/Modules/FindCUDA.cmake)
 
 set(SOURCE_FILES main.cpp filter.cu twoscale.cu)
 cuda_add_executable(TwoScale ${SOURCE_FILES})

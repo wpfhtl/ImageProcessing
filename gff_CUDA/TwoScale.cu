@@ -23,7 +23,7 @@ void TwoScale::twoscale(float *d_imgOutA, float *d_imgOutB, float *d_imgIn, cons
     // * d_imgOutB is the low-pass part
     boxfilter(d_imgOutB, d_imgIn, wid, hei, filterR);
     // get the high pass coefficients
-	dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+	dim3 threadPerBlock(BLK_SZ, BLK_SZ);
 	dim3 blockPerGrid;
 	blockPerGrid.x = (wid + threadPerBlock.x - 1) / threadPerBlock.x;
 	blockPerGrid.y = (hei + threadPerBlock.y - 1) / threadPerBlock.y;

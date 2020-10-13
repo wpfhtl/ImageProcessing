@@ -4,7 +4,7 @@
 using namespace std;
 using namespace cv;
 
-int main() {
+int main(int argc, char *argv[]) {
     std::cout << "Hello, World!" << std::endl;
 
     //cout << "sizeof(float4): " << sizeof(float4) << endl;        // return 16 bytes
@@ -15,8 +15,12 @@ int main() {
     //Mat imgP = imread("lena.jpg", IMREAD_COLOR);
     //Mat imgI = imread("img_00000.bmp", IMREAD_COLOR);            // no padding
     //Mat imgP = imread("img_00000.bmp", IMREAD_COLOR);
-    Mat imgI = imread("tulips.png", IMREAD_COLOR);                // no padding
-    Mat imgP = imread("tulips.png", IMREAD_COLOR);
+    // Mat imgI = imread("tulips.png", IMREAD_COLOR);                // no padding
+    // Mat imgP = imread("tulips.png", IMREAD_COLOR);
+    Mat imgI = imread(argv[1], IMREAD_COLOR);
+    Mat imgP = imread(argv[2], IMREAD_COLOR);
+    // int FILTERR = atoi(argv[3]);
+    // float EPS = atof(argv[4]);
 
     assert(imgI.empty() == false);
     assert(imgP.empty() == false);
@@ -44,6 +48,8 @@ int main() {
     // TODO: when the eps is less than zero, the result is wrong ! ! !
     // I guess, that may resulted by the positions of variables in some func. are wrong !
     // Solved! Because the calculation of corrI & corrIp, 在纵向计算时，并不需要进行平方操作，而尽在横向进行一次乘法操作即可
+    // std::cout << "imgI.channels() = " << imgI.channels() << std::endl;
+    // std::cout << "imgP.channels() = " << imgP.channels() << std::endl;
     gf.guidedfilter(imgOut, imgI, imgP);
     //gf.boxfilterTest(imgOut, imgI);                         // lena,   // update: correct !
 

@@ -20,7 +20,7 @@
 using namespace std;
 using namespace cv;
 
-#define BLOCKSIZE 16
+#define BLK_SZ 16
 
 #define cudaCheckErrors(err) __checkCUDAError(err, __FILE__, __LINE__)
 

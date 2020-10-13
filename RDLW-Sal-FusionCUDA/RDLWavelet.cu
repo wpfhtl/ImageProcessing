@@ -22,11 +22,11 @@ namespace IVFusion
         cudaCheckError(cudaMemcpyToSymbol(SincKernel, Sinc, sizeof(float) * 8 * 3));
 
         // set the thread hirearchy
-        threadPerBlock_ = dim3(BLOCKSIZE, BLOCKSIZE);
-        blockPerGrid_.x = iDiv(c, BLOCKSIZE);
-        blockPerGrid_.y = iDiv(r, BLOCKSIZE);
+        threadPerBlock_ = dim3(BLK_SZ, BLK_SZ);
+        blockPerGrid_.x = iDiv(c, BLK_SZ);
+        blockPerGrid_.y = iDiv(r, BLK_SZ);
         // OR
-        //blockPerGrid_ = dim3(iDiv(c, BLOCKSIZE), iDiv(r, BLOCKSIZE));
+        //blockPerGrid_ = dim3(iDiv(c, BLK_SZ), iDiv(r, BLK_SZ));
 
         // temporary allocated memory
         cudaCheckError(cudaMalloc(&d_Sinc_, sizeof(float) * r * c * 4));

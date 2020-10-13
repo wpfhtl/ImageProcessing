@@ -1,6 +1,6 @@
 #include "MSRCR.h"
 
-#define BLOCKSIZE 16
+#define BLK_SZ 16
 
 MSRCR::~MSRCR()
 {
@@ -43,11 +43,11 @@ __global__  void HF_Enhancer_kernel(float *d_out, float *d_in, int wid, int hei)
 
 void MSRCR::High_Frequency_Enhancer(float *d_out, float *d_in, int wid, int hei)
 {
-    //dim3 threadPerBlock(((wid >> 2) + BLOCKSIZE - 1)/ BLOCKSIZE, ((hei >> 2) + BLOCKSIZE - 1) / BLOCKSIZE);
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    //dim3 threadPerBlock(((wid >> 2) + BLK_SZ - 1)/ BLK_SZ, ((hei >> 2) + BLK_SZ - 1) / BLK_SZ);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
-    blockPerGrid.x = ((wid >> 2) + BLOCKSIZE - 1) / BLOCKSIZE;
-    blockPerGrid.y = ((hei >> 2) + BLOCKSIZE - 1) / BLOCKSIZE;
+    blockPerGrid.x = ((wid >> 2) + BLK_SZ - 1) / BLK_SZ;
+    blockPerGrid.y = ((hei >> 2) + BLK_SZ - 1) / BLK_SZ;
 
     HF_Enhancer_kernel<<<blockPerGrid, threadPerBlock>>>(d_out, d_in, wid, hei);
 }

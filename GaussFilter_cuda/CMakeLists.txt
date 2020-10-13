@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(SOURCE_FILES main.cpp gaussfilter.cu)
 
 include_directories(./)
-include(/usr/share/cmake-3.2/Modules/FindCUDA.cmake)
+include(/usr/share/cmake-3.10/Modules/FindCUDA.cmake)
 cuda_add_executable(GaussFilter ${SOURCE_FILES})
 
 # add link libraries

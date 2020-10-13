@@ -220,7 +220,7 @@ public:
 		d_ = feature_size;
 		HashTable hash_table( d_, N_/**(d_+1)*/ );
 		
-		const int blocksize = sizeof(__m128) / sizeof(float);
+		const int BLK_SZ = sizeof(__m128) / sizeof(float);
 		const __m128 invdplus1   = _mm_set1_ps( 1.0f / (d_+1) );
 		const __m128 dplus1      = _mm_set1_ps( d_+1 );
 		const __m128 Zero        = _mm_set1_ps( 0 );
@@ -241,7 +241,7 @@ public:
 		__m128 * elevated     = (__m128*) _mm_malloc( (d_+1)*sizeof(__m128) , 16 );
 		__m128 * rem0         = (__m128*) _mm_malloc( (d_+1)*sizeof(__m128) , 16 );
 		__m128 * rank         = (__m128*) _mm_malloc( (d_+1)*sizeof(__m128), 16 );
-		float * barycentric = new float[(d_+2)*blocksize];
+		float * barycentric = new float[(d_+2)*BLK_SZ];
 		short * canonical = new short[(d_+1)*(d_+1)];
 		short * key = new short[d_+1];
 		
@@ -266,12 +266,12 @@ public:
 #endif
 
 		// Compute the simplex each feature lies in
-		for( int k=0; k<N_; k+=blocksize ){
+		for( int k=0; k<N_; k+=BLK_SZ ){
 			// Load the feature from memory
 			float * ff = (float*)f;
 			for( int j=0; j<d_; j++ )
-				for( int i=0; i<blocksize; i++ )
-					ff[ j*blocksize + i ] = k+i < N_ ? feature[ (k+i)*d_+j ] : 0.0;
+				for( int i=0; i<BLK_SZ; i++ )
+					ff[ j*BLK_SZ + i ] = k+i < N_ ? feature[ (k+i)*d_+j ] : 0.0;
 			
 			// Elevate the feature ( y = Ep, see p.5 in [Adams etal 2010])
 			
@@ -320,7 +320,7 @@ public:
 			}
 			
 			// Compute the barycentric coordinates (p.10 in [Adams etal 2010])
-			for( int i=0; i<(d_+2)*blocksize; i++ )
+			for( int i=0; i<(d_+2)*BLK_SZ; i++ )
 				barycentric[ i ] = 0;
 			for( int i=0; i<=d_; i++ ){
 				__m128 v = (elevated[i] - rem0[i])*invdplus1;
@@ -328,7 +328,7 @@ public:
 				// Didn't figure out how to SSE this
 				float * fv = (float*)&v;
 				float * frank = (float*)&rank[i];
-				for( int j=0; j<blocksize; j++ ){
+				for( int j=0; j<BLK_SZ; j++ ){
 					int p = d_-frank[j];
 					barycentric[j*(d_+2)+p  ] += fv[j];
 					barycentric[j*(d_+2)+p+1] -= fv[j];
@@ -336,7 +336,7 @@ public:
 			}
 			
 			// The rest is not SSE'd
-			for( int j=0; j<blocksize; j++ ){
+			for( int j=0; j<BLK_SZ; j++ ){
 				// Wrap around
 				barycentric[j*(d_+2)+0]+= 1 + barycentric[j*(d_+2)+d_+1];
 				
@@ -345,7 +345,7 @@ public:
 				// Compute all vertices and their offset
 				for( int remainder=0; remainder<=d_; remainder++ ){
 					for( int i=0; i<d_; i++ ){
-						key[i] = frem0[i*blocksize+j] + canonical[ remainder*(d_+1) + (int)frank[i*blocksize+j] ];
+						key[i] = frem0[i*BLK_SZ+j] + canonical[ remainder*(d_+1) + (int)frank[i*BLK_SZ+j] ];
 					}
 					offset_[ (j+k)*(d_+1)+remainder ] = hash_table.find( key, true );
 					barycentric_[ (j+k)*(d_+1)+remainder ] = barycentric[ j*(d_+2)+remainder ];

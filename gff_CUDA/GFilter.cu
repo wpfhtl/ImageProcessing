@@ -149,10 +149,10 @@ void GFilter::guidedfilter(float *d_imgOut, float *d_imgInI, float *d_imgInP, in
         cudaCheckErrors(cudaStreamCreate(&stream[i]));
 
     // prepare the needed configuration
-    dim3 threadPerBlock(BLOCKSIZE, BLOCKSIZE);
+    dim3 threadPerBlock(BLK_SZ, BLK_SZ);
     dim3 blockPerGrid;
-    blockPerGrid.x = (wid + BLOCKSIZE - 1) / BLOCKSIZE;
-    blockPerGrid.y = (hei + BLOCKSIZE - 1) / BLOCKSIZE;
+    blockPerGrid.x = (wid + BLK_SZ - 1) / BLK_SZ;
+    blockPerGrid.y = (hei + BLK_SZ - 1) / BLK_SZ;
 
     // define the Box Filter
     // Step 1 : calculate the variance of image I
